@@ -16,6 +16,7 @@ struct data{
 	int argNum;
 	int numArray[];
 };
+
 //PROTOTYPES
 void* avg(void* d);
 void* min(void* d);
