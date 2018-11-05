@@ -27,8 +27,8 @@ void* std(void* d);
 float avgNum = 0; 
 int minNum = 0;
 int maxNum = 0;
-int medNum = 0; //MAYBE IMPLEMENTED 
-int stdNum = 0; //MAYBE IMPLEMENTED 
+float medNum = 0;  
+float stdNum = 0; 
 typedef struct data Data;
 
 int main(int argc, char *argv[]){
@@ -58,23 +58,28 @@ int main(int argc, char *argv[]){
 	puts("");	
 
 	//CREATING ALL THE THREADS AND WAITING FOR THEM
-	pthread_t calcAvg, calcMin, calcMax;
+	pthread_t calcAvg, calcMin, calcMax, calcMed;
 	if( (pthread_create(&calcAvg, NULL, avg, d)) != 0) 
 		perror("Error creating Average Calculation thread");
 	if( (pthread_create(&calcMin, NULL, min, d)) != 0) 
 		perror("Error creating Minimum Calculation thread");
 	if( (pthread_create(&calcMax, NULL, max, d)) != 0) 
 		perror("Error creating Minimum Calculation thread");	
+	if( (pthread_create(&calcMed, NULL, med, d)) != 0) 
+		perror("Error creating Median Calculation thread");
 	if( (pthread_join(calcAvg, NULL))!= 0)
-		perror("Error waiting for thread");
+		perror("Error waiting for Avg thread");
 	if( (pthread_join(calcMin, NULL))!= 0)
-		perror("Error waiting for thread");
+		perror("Error waiting for Min thread");
 	if( (pthread_join(calcMax, NULL))!= 0)
-		perror("Error waiting for thread");
+		perror("Error waiting for Max thread");
+	if( (pthread_join(calcMed, NULL))!= 0)
+		perror("Error waiting for Med thread");
 
 	//PRINT ALL NUMBERS FROM GLOBAL VARIABLES
 	printf("The average value is %.2f.\n", avgNum);
 	printf("The minimum value is %d.\n", minNum);
+	printf("The median  value is %.2f\n", medNum);
 	printf("The maximum value is %d.\n", maxNum);
 }
 
@@ -123,12 +128,11 @@ void* min(void* d){
 	
 
 	//LOGIC
-	minNum = dmin->numArray[0];
-	while(i<dmin->argNum){
+	minNum = dmin->numArray[i];
+	for(i = 0; i<dmin->argNum; i++){
 		if(minNum > dmin->numArray[i]){
 			minNum = dmin->numArray[i];
 		}
-		i++;
 	}
 }
 
@@ -149,24 +153,24 @@ void* max(void* d){
 	//printf("ArgNum: %d\n", dmax->argNum);
 	/*for(int t = 0; t<dmax->argNum; t++)
 		printf("%d, ", dmax->numArray[t]);
-	puts("");
-	*/
+	puts("");*/
+	
 	
 	//LOGIC
-	maxNum = dmax->numArray[0];
-	while(i>dmax->argNum){
-		if(maxNum > dmax->numArray[i]){
+	maxNum = dmax->numArray[i];
+	for(i = 0; i<dmax->argNum; i++){
+		if(maxNum < dmax->numArray[i]){
 			maxNum = dmax->numArray[i];
 		}
-		i++;
 	}
 }
 
 void* med(void* d){
 	//LOCAL VARIABLES 
-	int x= 0;
+	int x= 0, half;
 	Data *dmed; 
-	dmed = (Data*)d; 
+	dmed = (Data*)d;
+	half = dmed->argNum/2; 
 
 	//ERROR HANDLING: If struct doesn't copy
 	if(dmed == NULL){
@@ -184,11 +188,22 @@ void* med(void* d){
 	//LOGIC
 	for(int i=0; i < dmed->argNum; i++){
 		for(int j = i+1; j<dmed->argNum; j++){
-			if(dmed->numArray[i] < dmed->numArray[j]){
+			if(dmed->numArray[i] > dmed->numArray[j]){
 				x = dmed->numArray[i];
 				dmed->numArray[i] = dmed->numArray[j];
 				dmed->numArray[j] = x;
 			}
 		}
 	}
+
+	if(dmed->argNum%2 == 0){
+		medNum= ((dmed->numArray[half] + dmed->numArray[half-1])/2.0);
+	}else{
+		medNum=(dmed->numArray[half]);
+	}
+
+	//TESTING
+	/*for (int i = 0; i < dmed->argNum; i++){
+		printf("%d, \n", dmed->numArray[i]);
+	}*/
 }
